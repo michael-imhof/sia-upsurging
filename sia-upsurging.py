@@ -7,7 +7,7 @@
 ##################################################################################################
 
 
-This script contains the main routine of an SIA ice flow model employing UPSURGING, described in Appendix C in:
+This script contains an SIA ice flow model employing UPSURGING, described in Appendix C in:
 
 Imhof, Michael Andreas,
 "Combined climate-ice flow modelling of the Alpine Ice Field during the Last Glacial Maximum",
@@ -596,13 +596,13 @@ if __name__ == "__main__":
 
 	# run time figure
 	if run_time_figure:
-		fig = plt.figure(figsize=(24, 24)) #55
+		fig = plt.figure(figsize=(15, 20)) #55
 		gs2 = GridSpec(1, 2)
-		gs2.update(left=0.0, right=0.94, top=1, bottom=0.0,  wspace=0.0, hspace=0.0)
+		gs2.update(left=0.03, right=0.85, top=0.97, bottom=0.03,  wspace=0.05, hspace=0.05)
 		ax1  = [plt.subplot(gs2[0, 0])]
 		ax1.append( plt.subplot(gs2[0, 1]))
 		gs3 = GridSpec(1, 1)
-		gs3.update(left=0.95, right=1, top=1, bottom=0.0,  wspace=0.0, hspace=0.0)
+		gs3.update(left=0.86, right=0.91, top=0.97, bottom=0.03,  wspace=0.0, hspace=0.0)
 		ax1c  = plt.subplot(gs3[0, 0])
 
 
@@ -686,6 +686,9 @@ if __name__ == "__main__":
 				# plot ice thickness color bar
 				ax1c.clear()
 				cbar = plt.colorbar(data_plot, ax1c)#, extend='max'
+				cbar.set_label(label='Ice thickness (m)',fontsize=20)
+				cbar.ax.tick_params(labelsize=20)
+				ax1c.set_aspect(10)
 
 
 				# plot map of bedrock and surface mass balance
@@ -695,6 +698,13 @@ if __name__ == "__main__":
 				smb_masked= np.ma.masked_where(ice < 0.001, smb) 
 				ax1[1].imshow(smb_masked, cmap='coolwarm_r', interpolation='nearest', origin='lower',vmin=-0.3,vmax=0.3 )
 
+				ax1[0].get_xaxis().set_visible(False)
+				ax1[0].get_yaxis().set_visible(False)
+				ax1[1].get_xaxis().set_visible(False)
+				ax1[1].get_yaxis().set_visible(False)
+
+				ax1[0].set_title('Ice thickness',fontsize=20)
+				ax1[1].set_title('Accumulation/Ablation areas',fontsize=20)
 
 
 				plt.draw()
