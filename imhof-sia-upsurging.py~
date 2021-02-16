@@ -8,13 +8,11 @@
 
 
 This script contains the main routine of an SIA ice flow model employing UPSURGING, described in Appendix C in:
-
 Imhof, Michael Andreas,
 "Combined climate-ice flow modelling of the Alpine Ice Field during the Last Glacial Maximum",
 2021,
 ETH Zurich, dissertation no. 27416,
 DOI:???
-
 
 
 Copyright (C) 2021 Michael Andreas Imhof
