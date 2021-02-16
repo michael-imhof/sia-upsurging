@@ -487,7 +487,7 @@ if __name__ == "__main__":
 	import argparse
 
 	# Argument parser
-	parser = argparse.ArgumentParser(description='Settings:')
+	parser = argparse.ArgumentParser(description='Options')
 	parser.add_argument('-ib', '--inputbedrock', default='None', type=str, help='input bedrock file path')
 	parser.add_argument('-iice', '--iice', default='False', type=str, help='initialize with ice from input bedrock file', choices=['False', 'True'])
 	parser.add_argument('-ibvn', '--inputbedrockvarname', default='topg', type=str, help='input bedrock variable name')
