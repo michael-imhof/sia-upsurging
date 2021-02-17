@@ -2,7 +2,7 @@
 
 '''
 ##################################################################################################
-#     Code designed and implemented by Michael Andreas Imhof 
+#    Code designed and implemented by Michael Andreas Imhof 
 #    2021-02-15
 ##################################################################################################
 
@@ -34,18 +34,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
 Michael Andreas Imhof was funded by the Swiss National Science Foundation (project 200021-162444).
-
 '''
 
 #--------------------------------------------------------------------
 
 from __future__ import division
 import numpy as np
-from time import gmtime, strftime
 import os.path
 import time
-from netCDF4 import Dataset
-from copy import copy, deepcopy
+from copy import deepcopy
 
 
 import matplotlib.pyplot as plt
@@ -59,7 +56,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 
 #------------------------------------------------------------------
-def make_fig_endstate(pdf_name, bedrock_eff, ice, surf_elev):
+def make_fig_endstate(pdf_name, bedrock, ice, surf_elev):
     # this subroutine creates a figure at the end of the simulation
 
     hmin=0
@@ -78,7 +75,7 @@ def make_fig_endstate(pdf_name, bedrock_eff, ice, surf_elev):
     ax1c = plt.subplot(gs1[0, 0])
 
     # draw data
-    ax1.imshow(bedrock_eff, cmap='binary', interpolation='nearest', origin='lower', vmin=0, vmax=4000)
+    ax1.imshow(bedrock, cmap='binary', interpolation='nearest', origin='lower', vmin=0, vmax=4000)
     ice_masked = np.ma.masked_where(ice < 0.001, ice) 
     data_plot = ax1.imshow(ice_masked, cmap='plasma_r', interpolation='nearest', origin='lower',vmin=hmin, vmax=hmax)
 
@@ -109,7 +106,7 @@ def make_fig_endstate(pdf_name, bedrock_eff, ice, surf_elev):
 
 
 ################################################################33
-# subroutines that write data and info to txt files
+#    subroutines that write data and info to txt files
 #################################################################3
 def write_simulation_settings_file():
     """writes model settings used for the simulation to 'simulation_setting_info.txt'"""
@@ -174,7 +171,7 @@ def write_data_to_txt(output_file_name, data, nx, ny):
     print(' *** text file with simulation data written')
 
 ################################################################
-# subroutines for the ice flow modelling
+#    subroutines for the ice flow modelling
 #------------------------------------------------------------------
 def dirichlet_bc(ice):
     """set ice thickness to 0 at the domain boundary"""
@@ -185,47 +182,38 @@ def dirichlet_bc(ice):
     return ice
 
 #------------------------------------------------------------------
-def initialize_model(input_bedrock_file, dx, iice):
-    """This subroutine initialize arrays for relaxed bedrock (bedrock0), current bedrock (bedrock_eff), 
-    domain size (nx,ny), resolution (dx), ice thickness (ice), surface elevation (surf_elev), mass balance (smb)"""
+def initialize_model(input_bedrock_file, dx):
+    """This subroutine initialize arrays for bedrock (bedrock), domain size (nx,ny), resolution (dx), 
+    ice thickness (ice), surface elevation (surf_elev), mass balance (smb)"""
 
     if(input_bedrock_file == 'None'):
 
         nx = 31
         ny = 31
         dx = 50000
-        bedrock0= np.zeros((nx,ny))
-        bedrock_eff= np.zeros((nx,ny))
+        bedrock= np.zeros((nx,ny))
         ice = np.zeros((nx,ny))
         smb = np.zeros((nx,ny))
 
     else:
 
-        # load bedrock from nc file
-        f = Dataset(input_bedrock_file, mode='r')
-        bedrock0 = f.variables['topg'][:,:]
-        bedrock0 = bedrock0.astype(float)
-        f.close()
-
-        nx = bedrock0.shape[0]
-        ny = bedrock0.shape[1]
-        bedrock_eff = deepcopy(bedrock0)
+        # load bedrock from txt file
+        bedrock = np.genfromtxt(input_bedrock_file, unpack=True)
+        nx = bedrock.shape[0]
+        ny = bedrock.shape[1]
         ice = np.zeros((nx,ny))
         smb = np.zeros((nx,ny))
 
         print(' *** Loaded input bedrock from file: '+input_bedrock_file)
 
 
-    if iice == False:
-        ice[:,:] = 0
-
-    surf_elev = bedrock0 + ice
+    surf_elev = bedrock + ice
     surf_elev[surf_elev<0] = 0
 
 
 
 
-    return bedrock0,bedrock_eff,nx,ny,dx,ice,surf_elev,smb
+    return bedrock,nx,ny,dx,ice,surf_elev,smb
 
 #------------------------------------------------------------------
 def mass_balance(smbm, ice, surf_elev, time_now, ela, mbal_grad, max_acc, nx, ny, dx):
@@ -264,7 +252,7 @@ def phi(r):
     return val_phi
 
 #------------------------------------------------------------------
-def ice_flow_sia_muscl(H, S, B, Gamma, n, dx, dy, CFL, dt_uplim, dt_min):
+def ice_flow_sia_muscl(H, S, Gamma, n, dx, dy, CFL, dt_uplim, dt_min):
     """This subroutine calculates the new ice thickness with the muscl method. 
     This subroutine stems from: https://github.com/alexjarosch/sia-fluxlim (2021-02-15)
     I adapted variable names such it can be used with the rest of my code"""
@@ -377,7 +365,7 @@ def ice_flow_sia_muscl(H, S, B, Gamma, n, dx, dy, CFL, dt_uplim, dt_min):
     div_back = div_k + div_l
     
     # calculate new ice thickness  
-    dt = min(dt_uplim, max(dt_min, dt_cfl ) ) 
+    dt = min(dt_uplim, max(dt_min, dt_cfl)) 
 
     H = H + dt*div_back
     ice_new = deepcopy(H)
@@ -389,7 +377,7 @@ def ice_flow_sia_muscl(H, S, B, Gamma, n, dx, dy, CFL, dt_uplim, dt_min):
     return ice_new, dt, np.sum(np.sum(ice_new - H,axis=1),axis=0)*dx*dx
 
 #------------------------------------------------------------------
-def ice_flow_sia_m2(ice, surf_elev, bedrock, CFL, dt_uplim, dt_min, use_upsurging, n, dx, nx, ny, omega):
+def ice_flow_sia_m2(ice, surf_elev, omega, n, dx, nx, ny, CFL, dt_uplim, dt_min, use_upsurging):
     """This subroutine calculates the new ice thickness with the m2 or the upsurging method"""
 
     ice_new     = np.zeros((nx,ny))
@@ -444,6 +432,7 @@ def ice_flow_sia_m2(ice, surf_elev, bedrock, CFL, dt_uplim, dt_min, use_upsurgin
 
     ice_new = deepcopy(ice_new_raw)
 
+
     # no negative ice criterion 
     ice_new[ice_new<0.0] = 0.0
 
@@ -459,28 +448,24 @@ if __name__ == "__main__":
 
     # Argument parser
     parser = argparse.ArgumentParser(description='Settings:')
-    parser.add_argument('-ib', '--inputbedrock', default='None', type=str, help='input bedrock file path')
-    parser.add_argument('-iice', '--iice', default='False', type=str, help='initialize with ice from input bedrock file', choices=['False', 'True'])
-    parser.add_argument('-ibvn', '--inputbedrockvarname', default='topg', type=str, help='input bedrock variable name')
+    parser.add_argument('-ib', '--input_bedrock', default='None', type=str, help='input bedrock file path')
     parser.add_argument('-ys', '--ys', default=0.0, type=float, help='simulation starting year')
     parser.add_argument('-ye', '--ye', default=20000.0, type=float, help='simulation ending year')
-    parser.add_argument('-of', '--output_freq', default=50.0, type=float, help='output rate [a]')
-    parser.add_argument('-dx', '--resolution', default=5000.0, type=float, help='lateral resolution [m]')
+    parser.add_argument('-of', '--output_freq', default=50.0, type=float, help='output rate (a)')
+    parser.add_argument('-dx', '--resolution', default=5000.0, type=float, help='lateral resolution (m)')
     parser.add_argument('-smbm', '--smbm', default='eismint1fm', type=str, help='Surface mass balance model', choices=['eismint1fm', 'eismint1mm','elevation'])
-    parser.add_argument('-ela', '--ela', default=3000.0, type=float, help='Equilibrium line altitude [m]')
-    parser.add_argument('-mbal_grad', '--mbal_grad', default=0.0075, type=float, help='Mass balance gradient [(m/a)/m]')
-    parser.add_argument('-max_acc', '--max_acc', default=3.0, type=float, help='Maximum accumulation rate [m/a]')
+    parser.add_argument('-ela', '--ela', default=3000.0, type=float, help='Equilibrium line altitude (m)')
+    parser.add_argument('-mbal_grad', '--mbal_grad', default=0.0075, type=float, help='Mass balance gradient ((m/a)/m)')
+    parser.add_argument('-max_acc', '--max_acc', default=3.0, type=float, help='Maximum accumulation rate (m/a)')
     parser.add_argument('-exp_name', '--exp_name', default='spam', type=str, help='Experiment name shown on output directory')
-    parser.add_argument('-model_choice', '--model_choice', default='upsurging', type=str, help='Chose SIA model version', choices=['m2', 'upsurging','muscl'])
+    parser.add_argument('-rt_fig', '--run_time_figure', default='True', type=str, help='Print run time figure of the modelled glaciers', choices=['True','False'])
+    parser.add_argument('-model_choice', '--model_choice', default='upsurging', type=str, help='Chose SIA integration scheme', choices=['m2', 'upsurging','muscl'])
 
     args = parser.parse_args()
 
 #    Initialize strings, booleans and variables from input parser
 #------------------------------------------------------------------------
-    input_bedrock_file = args.inputbedrock
-
-    bedrock_var_name = args.inputbedrockvarname
-    iice = args.iice
+    input_bedrock_file = args.input_bedrock
     ys = args.ys
     ye = args.ye
     dx = args.resolution
@@ -491,11 +476,13 @@ if __name__ == "__main__":
     max_acc = args.max_acc
     experiment_name = args.exp_name
     model_choice = args.model_choice
+    run_time_figure = args.run_time_figure
 
-    if iice == 'False':
-        iice = False
+
+    if run_time_figure == 'True':
+        run_time_figure == True
     else:
-        iice = True
+        run_time_figure == False
 
 
     if model_choice == 'm2':
@@ -508,41 +495,40 @@ if __name__ == "__main__":
 #=============================================================
 #    simulation settings
 #=============================================================
-    run_time_figure = True
+
 
 #=============================================================
-#    Constants
-#=============================================================
-#    Ice dynamics
-    g = 9.81        # m s-2
-    rho_i = 910        # kg m-3
-    n = 3        # []
-    A_ice = 1e-16        # Pa-n a-1
+#    Constants Ice dynamics
+#=============================================================  
+    g = 9.81      # m s-2
+    rho_i = 910   # kg m-3
+    n = 3         # []
+    A_ice = 1e-16 # Pa-n a-1
 
 #=============================================================
 #    model time_now
 #=============================================================
     time_now = ys
-    dt_max = 100.0        # years, time steps are no longer than this
-    dt_min =  0.0        # years, time steps are at least this long
-    CFL = 0.124         # []
+    dt_max = 100.0 # years, time steps are no longer than this
+    dt_min =  0.0  # years, time steps are at least this long
+    CFL = 0.124    # ()
 
 #=============================================================
 #    Load input data and initialize bedrock and ice
 #=============================================================
-    bedrock0, bedrock_eff, nx, ny, dx, ice, surf_elev, smb = initialize_model(input_bedrock_file, dx, iice)
+    bedrock, nx, ny, dx, ice, surf_elev, smb = initialize_model(input_bedrock_file, dx)
 
 #=============================================================
 #    diagnostic variables
 #=============================================================
-    vol_error_cum = 0
+    vol_error_cum = 0     # m-3
     iter_nr = 0
 
 #=============================================================
 #    output dir
 #=============================================================
     cwd = os.getcwd()
-    time_stamp=strftime("%Y_%m_%d__%H_%M_%S", gmtime())
+    time_stamp=time.strftime("%Y_%m_%d__%H_%M_%S", time.gmtime())
     output_dir_name = time_stamp+'_'+experiment_name
     os.system('mkdir '+output_dir_name)
     os.chdir(cwd+'/'+output_dir_name)
@@ -553,7 +539,7 @@ if __name__ == "__main__":
 #    pre process
 #=============================================================
     omega = 2/(n + 2)*A_ice*(rho_i*g)**n 
-    time_next_out = ys+output_freq
+    time_next_out = ys + output_freq
 
 #=============================================================
 #    Initialize figure and output files
@@ -562,16 +548,16 @@ if __name__ == "__main__":
     # run time figure
     if run_time_figure:
         fig = plt.figure(figsize=(15, 20)) 
-        gs2 = GridSpec(1, 2)
-        gs2.update(left=0.03, right=0.85, top=0.97, bottom=0.03, wspace=0.05, hspace=0.05)
-        ax1  = [plt.subplot(gs2[0, 0])]
-        ax1.append( plt.subplot(gs2[0, 1]))
+        gs1 = GridSpec(1, 2)
+        gs1.update(left=0.03, right=0.85, top=0.97, bottom=0.03, wspace=0.05, hspace=0.05)
+        ax1  = [plt.subplot(gs1[0, 0])]
+        ax1.append( plt.subplot(gs1[0, 1]))
         gs3 = GridSpec(1, 1)
         gs3.update(left=0.86, right=0.91, top=0.97, bottom=0.03, wspace=0.0, hspace=0.0)
         ax1c  = plt.subplot(gs3[0, 0])
 
 
-    write_data_to_txt('bedrock_'+str(int(round(time_now))).zfill(6)+'.txt', bedrock_eff, nx, ny)
+    write_data_to_txt('bedrock_'+str(int(round(time_now))).zfill(6)+'.txt', bedrock, nx, ny)
     write_data_to_txt('ice_'+str(int(round(time_now))).zfill(6)+'.txt', ice, nx, ny)
 
     # set up time series file
@@ -594,12 +580,12 @@ if __name__ == "__main__":
         # calculate and perform ice dynamics
         if model_choice == 'm2': # or upsurging
             ice_dyn_t0 = time.time()
-            ice, h_x, h_y, D_x, D_y, dt, vol_error = ice_flow_sia_m2(ice,surf_elev, bedrock_eff, CFL, dt_uplim,dt_min, use_upsurging,n,dx,nx,ny,omega)
+            ice, h_x, h_y, D_x, D_y, dt, vol_error = ice_flow_sia_m2(ice, surf_elev, omega, n, dx, nx, ny, CFL, dt_uplim, dt_min, use_upsurging)
             ice_dyn_t0 =  time.time()-ice_dyn_t0 
 
         if model_choice == 'muscl':
             ice_dyn_t0 = time.time()
-            ice, dt, vol_error = ice_flow_sia_muscl(ice,surf_elev, bedrock_eff, omega, n, dx, dx, CFL, dt_uplim, dt_min)
+            ice, dt, vol_error = ice_flow_sia_muscl(ice, surf_elev, omega, n, dx, dx, CFL, dt_uplim, dt_min)
             ice_dyn_t0 =  time.time()-ice_dyn_t0 
 
         vol_error_cum = vol_error_cum + vol_error
@@ -615,7 +601,7 @@ if __name__ == "__main__":
 
         # update ice surface elevation
         surfelev_t0 = time.time() 
-        surf_elev[:,:] = np.maximum(bedrock_eff[:,:] + ice[:,:], 0)
+        surf_elev[:,:] = np.maximum(bedrock[:,:] + ice[:,:], 0)
         surfelev_t0 =  time.time() - surfelev_t0 
 
         # dirichlet Boundary Condition
@@ -638,7 +624,7 @@ if __name__ == "__main__":
             if run_time_figure:
                 # plot map of bedrock and ice thickness
                 ax1[0].clear()
-                ax1[0].imshow(bedrock_eff, cmap='binary', interpolation='nearest', origin='lower',vmin=0,vmax=4000 )
+                ax1[0].imshow(bedrock, cmap='binary', interpolation='nearest', origin='lower',vmin=0,vmax=4000 )
 
                 ice_masked = np.ma.masked_where(ice < 0.01, ice) 
                 data_plot = ax1[0].imshow(ice_masked, cmap='plasma_r', interpolation='nearest', origin='lower', vmin=0, vmax=None)
@@ -658,7 +644,7 @@ if __name__ == "__main__":
 
                 # plot map of bedrock and surface mass balance
                 ax1[1].clear()
-                ax1[1].imshow(bedrock_eff, cmap='binary', interpolation='nearest', origin='lower',vmin=0,vmax=4000)
+                ax1[1].imshow(bedrock, cmap='binary', interpolation='nearest', origin='lower',vmin=0,vmax=4000)
 
                 smb_masked= np.ma.masked_where(ice < 0.001, smb) 
                 ax1[1].imshow(smb_masked, cmap='coolwarm_r', interpolation='nearest', origin='lower', vmin=-0.3, vmax=0.3)
@@ -674,7 +660,6 @@ if __name__ == "__main__":
 
                 plt.draw()
                 plt.pause(1e-17)
-                time.sleep(0.001)
 
 
         clock_now = time.time()
@@ -684,16 +669,15 @@ if __name__ == "__main__":
         print('')
         print('Model time_now: '+str(time_now))
         print('------------------------')
-        print('dt: '+str(dt) )
+        print('dt: '+str(dt)+' a')
         print('Volume error: '+str(vol_error)+' m3')
         print('Cum. volume error: '+str(vol_error_cum)+' m3')
-        print('Min ice: '+str(np.min(np.min(ice,axis=1),axis=0))+' m')
-        print('Average model years / h:    '+str((time_now-ys)/((clock_now - real_time_start)/3600)))
-        print('Diagnostic model years / h: '+str(dt/((clock_now - iter_t0)/3600 )) )
-        print('Calc. time ice dynamics:    '+str(ice_dyn_t0))
-        print('Calc. time smb:             '+str(smb_t0))
-        print('Calc. time surf elev, sea l:'+str(surfelev_t0))
-        print('Calc. time 1 iteration:     '+str(clock_now-iter_t0 ))
+        print('Average model years / h:     '+str((time_now-ys)/((clock_now - real_time_start)/3600)))
+        print('Diagnostic model years / h:  '+str(dt/((clock_now - iter_t0)/3600)))
+        print('Calc. time ice dynamics (s): '+str(ice_dyn_t0))
+        print('Calc. time smb (s):          '+str(smb_t0))
+        print('Calc. time surf elev (s):    '+str(surfelev_t0))
+        print('Calc. time 1 iteration (s):  '+str(clock_now-iter_t0 ))
         print(round(time_next_out,5))
         print(round(time_now,5))
 
@@ -702,12 +686,12 @@ if __name__ == "__main__":
 
 
 #=============================================================
-#    Make final figures 
+#    Save end state figure 
 #=============================================================
 
     save_simulation_statistics()
 
-    make_fig_endstate('end_state.pdf', bedrock_eff, ice, surf_elev)
+    make_fig_endstate('end_state.pdf', bedrock, ice, surf_elev)
 
 
     # leave output directory
