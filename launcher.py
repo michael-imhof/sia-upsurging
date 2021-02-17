@@ -7,7 +7,7 @@
 ##################################################################################################
 
 
-This script contains exemples for how to launch the main script "sia-upsurging"
+This script contains exemples for how to launch the main script "sia-upsurging.py"
 
 Copyright (C) 2021 Michael Andreas Imhof
 
@@ -37,10 +37,9 @@ import os.path
 #----------------------------------------
 
 os.system('./sia-upsurging.py -smbm elevation -ib 1km-rhone_valley.nc -dx 1000 -ye 200 -of 10 -ela 2100 -mbal_grad 0.0075 -max_acc 2.00 -exp_name 1km_rhonevalley_upsurging_ye2000 -model_choice upsurging ')
-
 #os.system('./sia-upsurging.py -smbm elevation -ib 1km-rhone_valley.nc -dx 1000 -ye 200 -of 10 -ela 2100 -mbal_grad 0.0075 -max_acc 2.00 -exp_name 1km_rhonevalley_m2_ye2000 -model_choice m2 ')
 #os.system('./sia-upsurging.py -smbm elevation -ib 1km-rhone_valley.nc -dx 1000 -ye 200 -of 10 -ela 2100 -mbal_grad 0.0075 -max_acc 2.00 -exp_name 1km_rhonevalley_muscl_ye2000 -model_choice muscl ')
 
 #os.system('./sia-upsurging.py -smbm eismint1fm -ib None -ye 20000 -of 100 -exp_name eismint1fm -model_choice upsurging ')
-#os.system('./sia-upsurging.py -smbm eismint1mm -ib None -ye 20000 -of 100 -exp_name eismint1mm -model_choice upsurging ')
+
 
