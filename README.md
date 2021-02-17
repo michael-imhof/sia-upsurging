@@ -5,4 +5,3 @@ This is a python implementation of the UPstream SURface Gradient cappING (UPSURG
 
 To start the model type "./launcher.py" in the terminal. 
 
-
