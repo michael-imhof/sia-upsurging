@@ -16,7 +16,7 @@ The code is compatible with Python 2 and 3. The following packages are required:
 
 ## Script list
 - **'launcher.py'** contains an example of how to start the model
-- **'sia-upsurging.py'** contains the code for an SIA model with the option to use the UPSURGING scheme or the muscl SUPERBEE flux limiter of [Jarosch et all. (2013)](https://doi.org/10.5194/tc-7-229-2013). 
+- **'sia-upsurging.py'** contains the code for an SIA model with the option to use the UPSURGING scheme or the muscl SUPERBEE flux limiter of [Jarosch et al., (2013)](https://doi.org/10.5194/tc-7-229-2013). 
 
 
 ## sia-upsurging.py
@@ -24,7 +24,7 @@ The model loads the bedrock topography of Rhone Valley at a resolution of 1x1 km
 Three methods to calculate the ice flow by the SIA are available (-model_choice):
 - **m2** This is the SIA default version which is typically used. It is prone to problems with mass conservation. 
 - **upsurging** The surface gradient capping method introduced in Appendix C of _link to my dissertation_. It resolves the mass conservation problem. 
-- **muscl** Flux limiter of [Jarosch et all. (2013)](https://doi.org/10.5194/tc-7-229-2013). This is an other method to resolve the mass conservation problem. 
+- **muscl** Flux limiter of [Jarosch et al., (2013)](https://doi.org/10.5194/tc-7-229-2013). This is an other method to resolve the mass conservation problem. 
 
 
 ### Eismint
