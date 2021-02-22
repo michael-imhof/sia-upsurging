@@ -480,9 +480,9 @@ if __name__ == "__main__":
 
 
     if run_time_figure == 'True':
-        run_time_figure == True
+        run_time_figure = True
     else:
-        run_time_figure == False
+        run_time_figure = False
 
 
     if model_choice == 'm2':
