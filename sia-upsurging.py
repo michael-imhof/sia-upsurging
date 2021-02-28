@@ -547,7 +547,7 @@ if __name__ == "__main__":
 
     # run time figure
     if run_time_figure:
-        fig = plt.figure(figsize=(15, 20)) 
+        fig = plt.figure(figsize=(9, 6)) 
         gs1 = GridSpec(1, 2)
         gs1.update(left=0.03, right=0.85, top=0.97, bottom=0.03, wspace=0.05, hspace=0.05)
         ax1  = [plt.subplot(gs1[0, 0])]
@@ -630,15 +630,15 @@ if __name__ == "__main__":
                 data_plot = ax1[0].imshow(ice_masked, cmap='plasma_r', interpolation='nearest', origin='lower', vmin=0, vmax=None)
 
                 contour_levels = range(1000, 6000, 200)
-                ax1[0].contour(surf_elev,levels=contour_levels, colors='k', linewidths=[1], alpha=0.4)
+                ax1[0].contour(surf_elev,levels=contour_levels, colors='k', linewidths=[0.5], alpha=0.4)
                 contour_levels = range(1000, 6000, 1000)
-                ax1[0].contour(surf_elev,levels=contour_levels, colors='k', linewidths=[1], alpha=1)
+                ax1[0].contour(surf_elev,levels=contour_levels, colors='k', linewidths=[0.5], alpha=1)
 
                 # plot ice thickness color bar
                 ax1c.clear()
                 cbar = plt.colorbar(data_plot, ax1c)#, extend='max'
-                cbar.set_label(label='Ice thickness (m)', fontsize=20)
-                cbar.ax.tick_params(labelsize=20)
+                cbar.set_label(label='Ice thickness (m)', fontsize=10)
+                cbar.ax.tick_params(labelsize=10)
                 ax1c.set_aspect(10)
 
 
@@ -654,8 +654,8 @@ if __name__ == "__main__":
                 ax1[1].get_xaxis().set_visible(False)
                 ax1[1].get_yaxis().set_visible(False)
 
-                ax1[0].set_title('Ice thickness', fontsize=20)
-                ax1[1].set_title('Accumulation/Ablation area', fontsize=20)
+                ax1[0].set_title('Ice thickness', fontsize=10)
+                ax1[1].set_title('Accumulation/Ablation area', fontsize=10)
 
 
                 plt.draw()
@@ -678,8 +678,9 @@ if __name__ == "__main__":
         print('Calc. time smb (s):          '+str(smb_t0))
         print('Calc. time surf elev (s):    '+str(surfelev_t0))
         print('Calc. time 1 iteration (s):  '+str(clock_now-iter_t0 ))
-        print(round(time_next_out,5))
-        print(round(time_now,5))
+        print('Current year:                   '+str(round(time_now,5)))
+        print('Next output to scratch in year: '+str(round(time_next_out,5)))
+
 
 
 
