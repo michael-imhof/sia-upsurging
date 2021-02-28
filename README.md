@@ -30,7 +30,7 @@ Three methods to calculate the ice flow by the SIA are available (-model_choice)
 To start the model type `./launcher.py` in the terminal. 
 
 ## Output
-![Sample output of `sia-upsurging.py`](docs/end_state.pdf)
+![Sample output of `sia-upsurging.py`](docs/end_state.png)
 
 
 
